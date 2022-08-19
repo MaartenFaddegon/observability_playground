@@ -16,7 +16,17 @@ pub mod todobackend {
 }
 
 #[derive(Debug, Default)]
-pub struct MyTodoBackend {}
+pub struct MyTodoBackend {
+  todos: Vec<String>
+}
+
+impl MyTodoBackend {
+  fn new() -> Self {
+    MyTodoBackend {
+      todos: Vec::new(),
+    }
+  }
+}
 
 #[tonic::async_trait]
 impl TodoBackend for MyTodoBackend {
@@ -25,6 +35,7 @@ impl TodoBackend for MyTodoBackend {
         request: Request<AddRequest>,
     ) -> Result<Response<AddResponse>, Status> {
       println!("Got an ADD-request: {:?}", request);
+      self.todos.push(request.into_inner().item);
       let reply = todobackend::AddResponse {
         idx: 42,
       };

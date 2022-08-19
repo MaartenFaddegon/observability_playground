@@ -1,0 +1,27 @@
+syntax = "proto3";
+package todobackend;
+
+service TodoBackend {
+  rpc AddRPC(AddRequest) returns (AddResponse);
+  rpc GetRPC(GetRequest) returns (GetResponse);
+}
+
+message Item {
+  uint64 idx = 1;
+  string value = 2;
+}
+
+message AddRequest {
+  string item = 1;
+}
+
+message AddResponse {
+  uint64 idx = 1;
+}
+
+message GetRequest {
+}
+
+message GetResponse {
+  repeated Item items = 1;
+}

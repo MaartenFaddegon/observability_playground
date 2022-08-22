@@ -12,13 +12,22 @@ use todobackend::{
   }
 };
 
+#[derive(Debug)]
+enum Command {
+  Add {
+    item: String,
+  },
+  Get {
+  },
+}
+
 pub mod todobackend {
     tonic::include_proto!("todobackend");
 }
 
 #[derive(Debug)]
 pub struct MyTodoBackend {
-  db_sender: mpsc::Sender<String>
+  db_sender: mpsc::Sender<Command>
 }
 
 #[tonic::async_trait]
@@ -27,8 +36,8 @@ impl TodoBackend for MyTodoBackend {
         &self,
         request: Request<AddRequest>,
     ) -> Result<Response<AddResponse>, Status> {
-      println!("Got an ADD-request: {:?}", request);
-      self.db_sender.send(request.into_inner().item).await;
+      let cmd = Command::Add{item: request.into_inner().item};
+      self.db_sender.send(cmd).await;
       let reply = todobackend::AddResponse {
         idx: 42,
       };
@@ -39,10 +48,11 @@ impl TodoBackend for MyTodoBackend {
       &self,
       request: Request<GetRequest>,
   ) -> Result<Response<GetResponse>, Status> {
-    println!("Got a GET-request: {:?}", request);
     let reply = todobackend::GetResponse {
       items: Vec::new(),
     };
+    let cmd = Command::Get{};
+    self.db_sender.send(cmd).await;
     Ok(Response::new(reply))
   }
 }
@@ -50,9 +60,18 @@ impl TodoBackend for MyTodoBackend {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (tx, mut rx) = mpsc::channel(32);
-    let db_task = tokio::spawn(async move {
-      while let Some(s) = rx.recv().await {
-        println!("DB GOT {:?}", s);
+    let _db_task = tokio::spawn(async move {
+      let mut todos = Vec::new();
+      while let Some(cmd) = rx.recv().await {
+        match cmd {
+	  Command::Add{item: i} => {
+            println!("DB-ADD {:?}", i);
+	    todos.push(i)
+	  }
+	  Command::Get{} => {
+            println!("DB-GET");
+	  }
+        }
       }
     });
 

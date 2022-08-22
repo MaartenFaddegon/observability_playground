@@ -1,4 +1,5 @@
 use tonic::{transport::Server, Request, Response, Status};
+use tokio::sync::mpsc;
 
 use todobackend::{
   AddRequest, 
@@ -15,17 +16,9 @@ pub mod todobackend {
     tonic::include_proto!("todobackend");
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct MyTodoBackend {
-  todos: Vec<String>
-}
-
-impl MyTodoBackend {
-  fn new() -> Self {
-    MyTodoBackend {
-      todos: Vec::new(),
-    }
-  }
+  db_sender: mpsc::Sender<String>
 }
 
 #[tonic::async_trait]
@@ -35,7 +28,7 @@ impl TodoBackend for MyTodoBackend {
         request: Request<AddRequest>,
     ) -> Result<Response<AddResponse>, Status> {
       println!("Got an ADD-request: {:?}", request);
-      self.todos.push(request.into_inner().item);
+      self.db_sender.send(request.into_inner().item).await;
       let reply = todobackend::AddResponse {
         idx: 42,
       };
@@ -56,8 +49,17 @@ impl TodoBackend for MyTodoBackend {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let (tx, mut rx) = mpsc::channel(32);
+    let db_task = tokio::spawn(async move {
+      while let Some(s) = rx.recv().await {
+        println!("DB GOT {:?}", s);
+      }
+    });
+
     let addr = "[::1]:8080".parse()?;
-    let backend = MyTodoBackend::default();
+    let backend = MyTodoBackend{
+      db_sender: tx
+    };
     Server::builder()
         .add_service(TodoBackendServer::new(backend))
         .serve(addr)

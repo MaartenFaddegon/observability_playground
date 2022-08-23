@@ -1,5 +1,6 @@
 use tonic::{transport::Server, Request, Response, Status};
 use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 
 use todobackend::{
   AddRequest, 
@@ -18,6 +19,7 @@ enum Command {
     item: String,
   },
   Get {
+    resp: oneshot::Sender<Vec<String>>,
   },
 }
 
@@ -46,13 +48,26 @@ impl TodoBackend for MyTodoBackend {
 
   async fn get_rpc(
       &self,
-      request: Request<GetRequest>,
+      _request: Request<GetRequest>,
   ) -> Result<Response<GetResponse>, Status> {
-    let reply = todobackend::GetResponse {
-      items: Vec::new(),
+    let (resp_tx, resp_rx) = oneshot::channel::<Vec<String>>();
+    let cmd = Command::Get{
+      resp: resp_tx,
     };
-    let cmd = Command::Get{};
     self.db_sender.send(cmd).await;
+    let maybe_res = resp_rx.await;
+    let items = match maybe_res {
+      Ok(i) => {
+        i
+      }
+      Err(error) => {
+        println!("Error trying to GET: {:?}", error);
+        Vec::new()
+      }
+    };
+    let reply = todobackend::GetResponse {
+      items: items,
+    };
     Ok(Response::new(reply))
   }
 }
@@ -68,8 +83,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("DB-ADD {:?}", i);
 	    todos.push(i)
 	  }
-	  Command::Get{} => {
-            println!("DB-GET");
+	  Command::Get{resp: resp} => {
+            println!("DB-GET {:?}", todos);
+	    resp.send(todos.clone());
 	  }
         }
       }

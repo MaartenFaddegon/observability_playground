@@ -6,11 +6,6 @@ service TodoBackend {
   rpc GetRPC(GetRequest) returns (GetResponse);
 }
 
-message Item {
-  uint64 idx = 1;
-  string value = 2;
-}
-
 message AddRequest {
   string item = 1;
 }
@@ -23,5 +18,5 @@ message GetRequest {
 }
 
 message GetResponse {
-  repeated Item items = 1;
+  repeated string items = 1;
 }

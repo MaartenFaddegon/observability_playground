@@ -23,6 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let response = client.get_rpc(request).await?;
     let items = response.into_inner().items;
     println!("You have {} TODOs", items.len());
+    for item in items.iter() {
+      println!(" - {}", item);
+    }
     // user input
     println!("(q)uit / (a)dd todo-item / (r)efresh todo list");
     let mut cmd: String = String::new();

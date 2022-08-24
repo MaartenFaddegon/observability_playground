@@ -1,6 +1,11 @@
 syntax = "proto3";
 package todobackend;
 
+enum Res {
+  Ok = 0;
+  Err = 1;
+}
+
 service TodoBackend {
   rpc AddRPC(AddRequest) returns (AddResponse);
   rpc GetRPC(GetRequest) returns (GetResponse);
@@ -11,7 +16,7 @@ message AddRequest {
 }
 
 message AddResponse {
-  uint64 idx = 1;
+  Res res = 1;
 }
 
 message GetRequest {

@@ -1,12 +1,10 @@
 use std::io::stdin;
 
-use tonic::transport::Channel;
-
 use todobackend::{
   AddRequest, 
-  AddResponse,
+  // AddResponse,
   GetRequest, 
-  GetResponse,
+  // GetResponse,
   todo_backend_client::TodoBackendClient
 };
 
@@ -40,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let addreq = tonic::Request::new(AddRequest{
           item: description,
         });
-        let response = client.add_rpc(addreq).await?;
+        client.add_rpc(addreq).await?;
       }
       'r' =>
         println!("GET"),

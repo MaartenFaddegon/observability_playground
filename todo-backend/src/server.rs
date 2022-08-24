@@ -7,6 +7,7 @@ use todobackend::{
   AddResponse,
   GetRequest, 
   GetResponse,
+  Res,
   todo_backend_server::{
     TodoBackendServer, 
     TodoBackend
@@ -39,9 +40,17 @@ impl TodoBackend for MyTodoBackend {
         request: Request<AddRequest>,
     ) -> Result<Response<AddResponse>, Status> {
       let cmd = Command::Add{item: request.into_inner().item};
-      self.db_sender.send(cmd).await;
+      let res = match self.db_sender.send(cmd).await {
+        Ok(_) => {
+          Res::Ok
+        }
+        Err(e) => {
+          println!("DB.add failed: {:?}", e);
+          Res::Err
+        }
+      };
       let reply = todobackend::AddResponse {
-        idx: 42,
+        res: res.into(),
       };
       Ok(Response::new(reply))
   }
@@ -54,20 +63,23 @@ impl TodoBackend for MyTodoBackend {
     let cmd = Command::Get{
       resp: resp_tx,
     };
-    self.db_sender.send(cmd).await;
+    match self.db_sender.send(cmd).await {
+        Err(e) => {
+          println!("DB.get failed in step 1: {:?}", e);
+        }
+        _ => (),
+    };
     let maybe_res = resp_rx.await;
     let items = match maybe_res {
       Ok(i) => {
         i
       }
       Err(error) => {
-        println!("Error trying to GET: {:?}", error);
+        println!("DB.get failed in step 2: {:?}", error);
         Vec::new()
       }
     };
-    let reply = todobackend::GetResponse {
-      items: items,
-    };
+    let reply = todobackend::GetResponse{items};
     Ok(Response::new(reply))
   }
 }
@@ -83,9 +95,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("DB-ADD {:?}", i);
 	    todos.push(i)
 	  }
-	  Command::Get{resp: resp} => {
+	  Command::Get{resp} => {
             println!("DB-GET {:?}", todos);
-	    resp.send(todos.clone());
+	    match resp.send(todos.clone()) {
+              Err(e) => println!("DB-get failed sending todos: {:?}", e),
+              _ => ()
+            };
 	  }
         }
       }

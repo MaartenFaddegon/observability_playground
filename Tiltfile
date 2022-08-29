@@ -23,3 +23,15 @@ helm_resource(
   resource_deps=['ingress-nginx'],
 )
 k8s_resource('kube-prometheus-stack', links=['grafana.localhost', 'prometheus.localhost'])
+
+# Install the todo-backend
+docker_build('todo-backend', '.', dockerfile='docker/todobackend.Dockerfile')
+k8s_yaml(helm('./deploy-todo-backend'))
+
+# helm_resource(
+#   name='todo-backend', 
+#   chart='./deploy-todo-backend',
+#   namespace='default',
+#   flags=['--dependency-update', '--create-namespace'],
+#   labels=['Application'],
+# )

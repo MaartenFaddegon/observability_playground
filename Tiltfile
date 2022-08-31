@@ -28,10 +28,7 @@ k8s_resource('kube-prometheus-stack', links=['grafana.localhost', 'prometheus.lo
 docker_build('todo-backend', '.', dockerfile='docker/todobackend.Dockerfile')
 k8s_yaml(helm('./deploy-todo-backend'))
 
-# helm_resource(
-#   name='todo-backend', 
-#   chart='./deploy-todo-backend',
-#   namespace='default',
-#   flags=['--dependency-update', '--create-namespace'],
-#   labels=['Application'],
-# )
+# Install the todo-frontend
+docker_build('todo-frontend', '.', dockerfile='docker/todofrontend.Dockerfile')
+k8s_yaml(helm('./deploy-todo-frontend'))
+k8s_resource('todo-frontend', links=['todo-frontend.localhost'])

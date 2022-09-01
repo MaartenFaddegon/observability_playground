@@ -1,10 +1,18 @@
 FROM node:16
 WORKDIR /usr/src/app
 
+ENV PATH /app/node_modules/.bin/:$PATH
+
+# install dependencies
 COPY todo-frontend/package*.json ./
-COPY todo-frontend/server.js .
-
 RUN npm install
+RUN npm install react-scripts
 
-EXPOSE 8000
-CMD [ "node", "server.js" ]
+# copy app
+RUN mkdir public
+COPY todo-frontend/public/* public/
+RUN mkdir src
+COPY todo-frontend/src/* src/
+
+EXPOSE 3000
+CMD [ "npm", "start" ]

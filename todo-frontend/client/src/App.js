@@ -27,6 +27,37 @@ class Clock extends React.Component {
   }
 }
 
+
+class TodoList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { todos: [] };
+ }
+
+  componentDidMount() {
+      fetch("/todos")
+        .then((res) => res.json())
+        .then((data) => {
+          this.setState({ todos: data.todos })
+        })
+        .catch(console.log);
+  }
+ 
+  render() {
+    return (
+      <div>
+        <p> You have {this.state.todos.length} TODOs: </p>
+        <ul>
+          {this.state.todos.map(function(name){
+            return <li>{name}</li>;
+          })}
+        </ul>
+      </div>
+    );
+  }
+}
+
+
 function App() {
   const [data, setData] = React.useState(null);
 
@@ -42,7 +73,7 @@ function App() {
         <p> Todo App </p>
         <p>
           <Clock />
-          and you have {!data ? "?loading?" : data} TODOs
+          <TodoList />
         </p>
       </header>
     </div>

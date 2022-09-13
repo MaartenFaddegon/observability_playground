@@ -2,6 +2,8 @@ import logo from "./logo.svg";
 import "./App.css";
 import React from "react";
 
+////////////////////
+
 class Clock extends React.Component {
   constructor(props) {
     super(props);
@@ -27,6 +29,8 @@ class Clock extends React.Component {
   }
 }
 
+////////////////////
+// This component makes a REST call to the backend and lists the retrieved TODO's
 
 class TodoList extends React.Component {
   constructor(props) {
@@ -57,16 +61,57 @@ class TodoList extends React.Component {
   }
 }
 
+////////////////////
+// This component let's the user add a TODO that is submitted to the backend via a REST call
+
+class TodoForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: ''};
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) { 
+    this.setState({value: event.target.value});
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+    try {
+      let body = JSON.stringify({
+        todo: this.state.value,
+      });
+      console.log("before post /todo with body", body);
+      let res = await fetch("/todo", {
+        method: "POST",
+        body: body,
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      });
+      console.log("post todo |->", res);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          New TODO:
+          <input type="text" value={this.state.value} onChange={this.handleChange} />
+        </label>
+        <input type="submit" value="ADD" />
+      </form>
+    );
+  }
+}
+
+////////////////////
 
 function App() {
-  const [data, setData] = React.useState(null);
-
-  React.useEffect(() => {
-    fetch("/todos")
-      .then((res) => res.json())
-      .then((data) => setData(data.todos));
-  }, []);
-
   return (
     <div className="App">
       <header className="App-header">
@@ -74,6 +119,7 @@ function App() {
         <p>
           <Clock />
           <TodoList />
+          <TodoForm />
         </p>
       </header>
     </div>

@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import "./App.css";
 import React from "react";
 
@@ -33,26 +32,12 @@ class Clock extends React.Component {
 // This component makes a REST call to the backend and lists the retrieved TODO's
 
 class TodoList extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { todos: [] };
- }
-
-  componentDidMount() {
-      fetch("/todos")
-        .then((res) => res.json())
-        .then((data) => {
-          this.setState({ todos: data.todos })
-        })
-        .catch(console.log);
-  }
- 
   render() {
     return (
       <div>
-        <p> You have {this.state.todos.length} TODOs: </p>
+        <p> You have {this.props.todos.length} TODOs: </p>
         <ul>
-          {this.state.todos.map(function(name){
+          {this.props.todos.map(function (name) {
             return <li>{name}</li>;
           })}
         </ul>
@@ -67,13 +52,26 @@ class TodoList extends React.Component {
 class TodoForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {value: ''};
+    this.state = { value: "", todos: [] };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleChange(event) { 
-    this.setState({value: event.target.value});
+  componentDidMount() {
+    this.fetch_todos();
+  }
+
+  fetch_todos() {
+    fetch("/todos")
+      .then((res) => res.json())
+      .then((data) => {
+        this.setState({ todos: data.todos });
+      })
+      .catch(console.log);
+  }
+
+  handleChange(event) {
+    this.setState({ value: event.target.value });
   }
 
   async handleSubmit(event) {
@@ -87,10 +85,16 @@ class TodoForm extends React.Component {
         method: "POST",
         body: body,
         headers: {
-          'Content-type': 'application/json; charset=UTF-8',
+          "Content-type": "application/json; charset=UTF-8",
         },
       });
       console.log("post todo |->", res);
+      console.log("status = ", res.status);
+      if (res.status === 200) {
+        console.log("clear value");
+        this.setState({ value: "" });
+        this.fetch_todos();
+      }
     } catch (err) {
       console.log(err);
     }
@@ -98,13 +102,20 @@ class TodoForm extends React.Component {
 
   render() {
     return (
-      <form onSubmit={this.handleSubmit}>
-        <label>
-          New TODO:
-          <input type="text" value={this.state.value} onChange={this.handleChange} />
-        </label>
-        <input type="submit" value="ADD" />
-      </form>
+      <div>
+        <TodoList todos={this.state.todos} />
+        <form onSubmit={this.handleSubmit}>
+          <label>
+            New TODO:
+            <input
+              type="text"
+              value={this.state.value}
+              onChange={this.handleChange}
+            />
+          </label>
+          <input type="submit" value="ADD" />
+        </form>
+      </div>
     );
   }
 }
@@ -115,10 +126,9 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p> Todo App </p>
+        <h1> Todo App </h1>
         <p>
           <Clock />
-          <TodoList />
           <TodoForm />
         </p>
       </header>

@@ -1,3 +1,5 @@
+up:
+	tilt up
 
 todobackend:
 	docker build -t todo-backend -f docker/todobackend.Dockerfile ./todo-backend

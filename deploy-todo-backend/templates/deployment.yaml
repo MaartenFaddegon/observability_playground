@@ -3,45 +3,20 @@ kind: Deployment
 metadata:
   name: todo-backend
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
-      {{- include "todo-backend.selectorLabels" . | nindent 6 }}
+      app: todo-backend
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "todo-backend.selectorLabels" . | nindent 8 }}
+        app: todo-backend
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "todo-backend.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+        - name: todo-backend
           image: todo-backend
           imagePullPolicy: Always
           ports:
             - name: grpc
               containerPort: 8080
               protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}

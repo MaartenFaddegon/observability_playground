@@ -1,3 +1,22 @@
+var PROTO_PATH = __dirname + '/../todo-backend/proto/todobackend.proto';
+var grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+// Suggested options for similarity to existing grpc.load behavior
+var packageDefinition = protoLoader.loadSync(
+    PROTO_PATH,
+    {keepCase: true,
+     longs: String,
+     enums: String,
+     defaults: true,
+     oneofs: true
+    });
+var protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
+// The protoDescriptor object has the full package hierarchy
+var todobackend = protoDescriptor.todobackend;
+var client = new todobackend.TodoBackend('todo-backend:8080',
+                                       grpc.credentials.createInsecure());
+
+
 const path = require("path");
 const express = require("express");
 const PORT = process.env.PORT || 3000;

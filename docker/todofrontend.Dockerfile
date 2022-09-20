@@ -2,6 +2,8 @@ FROM node:16
 WORKDIR /usr/src/app
 
 ENV PATH /app/node_modules/.bin/:$PATH
+ENV GRPC_TRACE=all
+ENV GRPC_VERBOSITY=INFO
 
 # install dependencies
 COPY todo-frontend/package*.json ./

@@ -106,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
       }
     });
 
-    let addr = "[::1]:8080".parse()?;
+    let addr = "0.0.0.0:8080".parse()?;
     let backend = MyTodoBackend{
       db_sender: tx
     };

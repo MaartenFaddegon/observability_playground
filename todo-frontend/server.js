@@ -10,11 +10,8 @@ var packageDefinition = protoLoader.loadSync(
      defaults: true,
      oneofs: true
     });
-var protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
-// The protoDescriptor object has the full package hierarchy
-var todobackend = protoDescriptor.todobackend;
-var client = new todobackend.TodoBackend('todo-backend:8080',
-                                       grpc.credentials.createInsecure());
+var todobackend = grpc.loadPackageDefinition(packageDefinition).todobackend;
+var client = new todobackend.TodoBackend('todo-backend:8080', grpc.credentials.createInsecure());
 
 
 const path = require("path");
@@ -26,14 +23,30 @@ app.use(express.static(path.resolve(__dirname, "client/build")));
 app.use(express.json());
 
 app.post("/todo", (req, res) => {
-  console.log("handle POST /todo", req.body);
-  // TODO: make a GRPC here to the todo-backend
+  console.log("handle POST /todo", req.body.todo);
+  addCallback = function(err, addResponse) {
+    if (err) {
+      console.log('GRPC TodoBackend.addRPC error:', err);
+      return;
+    }
+    console.log('GRPC TodoBackend.addRPC returned:', addResponse);
+  }
+  addRequest = {item: req.body.todo};
+  client.AddRPC(addRequest, addCallback);
   res.send('OK')
 })
 
 app.get("/todos", (_req, res) => {
   console.log("handle GET /todos");
-  // TODO: make a GRPC here to the todo-backend
+  getCallback = function(err, getResponse) {
+    if (err) {
+      console.log('GRPC TodoBackend.getRPC error:', err);
+      return;
+    }
+    console.log('GRPC TodoBackend.getRPC returned:', getResponse);
+  }
+  getRequest = {item: req.body.todo};
+  client.GetRPC(getRequest, getCallback);
   res.json({ todos: ["boodschappen doen", "koken", "eten", "afwassen"] });
 });
 

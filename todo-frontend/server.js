@@ -12,12 +12,20 @@ var packageDefinition = protoLoader.loadSync(
     });
 var todobackend = grpc.loadPackageDefinition(packageDefinition).todobackend;
 var client = new todobackend.TodoBackend('todo-backend:8080', grpc.credentials.createInsecure());
-
-
 const path = require("path");
 const express = require("express");
 const PORT = process.env.PORT || 3000;
 const app = express();
+
+function grpcGet(getRequest) {
+  return new Promise((resolve, reject) => {
+    getCallback = function(err, getResponse) {
+      if (err) reject(err);
+      else resolve(getResponse);
+    }
+    client.GetRPC(getRequest, getCallback);
+  });
+}
 
 app.use(express.static(path.resolve(__dirname, "client/build")));
 app.use(express.json());
@@ -36,18 +44,12 @@ app.post("/todo", (req, res) => {
   res.send('OK')
 })
 
-app.get("/todos", (_req, res) => {
+app.get("/todos", async (_req, res) => {
   console.log("handle GET /todos");
-  getCallback = function(err, getResponse) {
-    if (err) {
-      console.log('GRPC TodoBackend.getRPC error:', err);
-      return;
-    }
-    console.log('GRPC TodoBackend.getRPC returned:', getResponse);
-  }
-  getRequest = {item: req.body.todo};
-  client.GetRPC(getRequest, getCallback);
-  res.json({ todos: ["boodschappen doen", "koken", "eten", "afwassen"] });
+  getRequest = {};
+  getResponse = await grpcGet(getRequest);
+  console.log('GRPC TodoBackend.getRPC returned:', getResponse);
+  res.json({ todos: getResponse.items });
 });
 
 app.get("*", (_req, res) => {
